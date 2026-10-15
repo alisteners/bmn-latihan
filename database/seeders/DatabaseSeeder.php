@@ -15,6 +15,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // 1. Membuat Akun Admin
+        User::factory()->create([
+            'name' => 'Admin BBWS',
+            'email' => 'admin@bmn.test',
+            'role' => 'admin',
+            'kode_satker' => '033041',
+        ]);
+
+        // 2. Membuat Akun Petugas
+        User::factory()->create([
+            'name' => 'Petugas Lapangan',
+            'email' => 'petugas@bmn.test',
+            'role' => 'petugas',
+            'kode_satker' => '033041',
+        ]);
+
+
         $this->call([
             AsetSeeder::class,
         ]);
