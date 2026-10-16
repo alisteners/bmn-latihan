@@ -27,6 +27,25 @@
             color: #2c3e50;
             border-bottom: 2px solid #eee;
             padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Notifikasi Flash Message */
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
         }
 
         /* CSS untuk Form Filter */
@@ -82,55 +101,21 @@
             background-color: #f1f1f1;
         }
 
-        /* Pagination */
-        .pagination {
-            margin-top: 20px;
-        }
-
-        /* --- CSS Khusus untuk Merapikan Pagination Bawaan Laravel --- */
-        .pagination svg {
-            width: 20px;
-            height: 20px;
-        }
-        .pagination nav {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
-        }
-        .pagination nav > div:last-child {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
+        /* Pagination & Aksi */
+        .pagination { margin-top: 20px; }
+        .pagination svg { width: 20px; height: 20px; }
+        .pagination nav { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        .pagination nav > div:last-child { display: flex; align-items: center; gap: 5px; }
         .pagination a, .pagination span {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 12px;
-            text-decoration: none;
-            border: 1px solid #dddddd;
-            color: #007bff;
-            background-color: #ffffff;
-            border-radius: 4px;
-            font-weight: normal;
-            transition: 0.2s;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 8px 12px; text-decoration: none; border: 1px solid #dddddd;
+            color: #007bff; background-color: #ffffff; border-radius: 4px; transition: 0.2s;
         }
-        .pagination a:hover {
-            background-color: #f1f1f1;
-        }
-        .pagination [aria-current="page"] span {
-            background-color: #007bff;
-            color: #ffffff;
-            border-color: #007bff;
-            font-weight: bold;
-        }
-        .pagination p {
-            margin: 0;
-            font-size: 14px;
-            color: #666;
-        }
-
+        .pagination a:hover { background-color: #f1f1f1; }
+        .pagination [aria-current="page"] span { background-color: #007bff; color: #ffffff; font-weight: bold; }
+        .pagination p { margin: 0; font-size: 14px; color: #666; }
+        .btn-opname { color: #007bff; text-decoration: none; font-weight: bold; }
+        .btn-opname:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -138,29 +123,59 @@
     <div class="container">
         <h2>Daftar Aset BMN - BBWS Cimanuk Cisanggarung</h2>
 
+        <!-- Flash Message Bawaan Laravel (Menangkap session dari Hari 6) -->
         @if (session('success'))
-    <div style="background-color: #d4edda; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
-        {{ session('success') }}
-    </div>
-@endif
+            <div class="alert-success">{{ session('success') }}</div>
+        @endif
+        @if (session('error'))
+            <div class="alert-error">{{ session('error') }}</div>
+        @endif
 
-@if (session('error'))
-    <div style="background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
-        {{ session('error') }}
+        <!-- Baris Info User, Tombol Khusus Admin, & Tombol Logout -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <div>
+        Login sebagai: <strong>{{ auth()->user()->name }}</strong> 
+        (Role: <span style="text-transform: uppercase;">{{ auth()->user()->role }}</span> | Satker: <strong>{{ auth()->user()->kode_satker }}</strong>)
     </div>
-@endif
-        
-        <!-- Form Filter -->
+
+    <div style="display: flex; gap: 10px; align-items: center;">
+        @if (auth()->user()->role === 'admin')
+            <a href="{{ url('/admin/impor') }}" style="background-color: #28a745; color: white; padding: 8px 14px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                + Impor Excel BMN
+            </a>
+        @endif
+
+        <form method="POST" action="{{ route('logout') }}" style="margin: 0;">
+            @csrf
+            <button type="submit" style="background-color: #dc3545; color: white; padding: 8px 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                Logout
+            </button>
+        </form>
+    </div>
+</div>
+
+        <!-- Kartu Ringkasan Rekapitulasi Opname -->
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+            <div style="flex: 1; background: #e3f2fd; padding: 15px; border-radius: 6px; border-left: 5px solid #007bff;">
+                <div style="font-size: 13px; color: #555;">Total Aset Satker</div>
+                <div style="font-size: 24px; font-weight: bold; color: #007bff;">{{ $totalAset }}</div>
+            </div>
+            <div style="flex: 1; background: #e8f5e9; padding: 15px; border-radius: 6px; border-left: 5px solid #28a745;">
+                <div style="font-size: 13px; color: #555;">Sudah Diopname</div>
+                <div style="font-size: 24px; font-weight: bold; color: #28a745;">{{ $sudahOpname }}</div>
+            </div>
+            <div style="flex: 1; background: #fff3cd; padding: 15px; border-radius: 6px; border-left: 5px solid #ffc107;">
+                <div style="font-size: 13px; color: #555;">Belum Diopname (Antrean)</div>
+                <div style="font-size: 24px; font-weight: bold; color: #d39e00;">{{ $belumOpname }}</div>
+            </div>
+        </div>
+
+        <!-- Form Filter (Pilihan Satker dihapus) -->
         <form method="GET" action="{{ url('/asets') }}" class="filter-form">
-            <select name="satker">
-                <option value="">-- Semua Satker --</option>
-                <option value="033041" {{ request('satker') == '033041' ? 'selected' : '' }}>033041</option>
-                <option value="033042" {{ request('satker') == '033042' ? 'selected' : '' }}>033042</option>
-                <option value="033043" {{ request('satker') == '033043' ? 'selected' : '' }}>033043</option>
-            </select>
-
             <select name="kondisi">
                 <option value="">-- Semua Kondisi --</option>
+                <!-- Pilihan Baru: Belum Diopname -->
+                <option value="belum" {{ request('kondisi') == 'belum' ? 'selected' : '' }}>⏳ Belum Diopname (Antrean)</option>
                 <option value="Baik" {{ request('kondisi') == 'Baik' ? 'selected' : '' }}>Baik</option>
                 <option value="Rusak Ringan" {{ request('kondisi') == 'Rusak Ringan' ? 'selected' : '' }}>Rusak Ringan</option>
                 <option value="Rusak Berat" {{ request('kondisi') == 'Rusak Berat' ? 'selected' : '' }}>Rusak Berat</option>
@@ -201,12 +216,12 @@
                         @endif
                     </td>
                     <td>
-    @if ($aset->kondisi === null)
-        <a href="{{ url('/asets/' . $aset->id . '/opname') }}">Kerjakan Opname</a>
-    @else
-        <span>✅ Selesai</span>
-    @endif
-</td>
+                        @if ($aset->kondisi === null)
+                            <a href="{{ url('/asets/' . $aset->id . '/opname') }}" class="btn-opname">Kerjakan Opname</a>
+                        @else
+                            <span style="color: green;">✅ Selesai</span>
+                        @endif
+                    </td>
                 </tr>
                 @empty
                 <!-- Ditampilkan jika hasil filter kosong -->

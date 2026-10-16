@@ -13,24 +13,33 @@ class AsetController extends Controller
     {
         $query = Aset::query();
 
-        // Mengunci data (Isolasi) berdasarkan kode_satker petugas yang sedang login
-        $query->where('kode_satker', $request->user()->kode_satker);
+        // Isolasi Satker: Hanya ambil data sesuai satker user yang login
+        $satkerUser = $request->user()->kode_satker;
+        $query->where('kode_satker', $satkerUser);
 
-        // Jika pengguna memilih filter satker
-        if ($request->filled('satker')) {
-            $query->where('kode_satker', $request->satker);
-        }
-
-        // Jika pengguna memilih filter kondisi
+        // A. Logika Filter Kondisi (Bercabang untuk nilai 'belum' / NULL)
         if ($request->filled('kondisi')) {
-            $query->where('kondisi', $request->kondisi);
+            if ($request->kondisi === 'belum') {
+                $query->whereNull('kondisi');
+            } else {
+                $query->where('kondisi', $request->kondisi);
+            }
         }
 
-        // Ambil data dengan pagination (tetap bawa parameter filternya saat pindah halaman)
-        $asets = $query->paginate(10)->withQueryString();
+        // B. Hitung 3 Angka Rekapitulasi Khusus Satker User
+        $totalAset   = Aset::where('kode_satker', $satkerUser)->count();
+        $sudahOpname = Aset::where('kode_satker', $satkerUser)->whereNotNull('kondisi')->count();
+        $belumOpname = Aset::where('kode_satker', $satkerUser)->whereNull('kondisi')->count();
 
+        // Paginate dan bawa parameter URL
+        $asets = $query->paginate(20)->withQueryString();
+
+        // Kirim semua data ke View
         return view('asets.index', [
-            'asets' => $asets
+            'asets'       => $asets,
+            'totalAset'   => $totalAset,
+            'sudahOpname' => $sudahOpname,
+            'belumOpname' => $belumOpname,
         ]);
     }
 
