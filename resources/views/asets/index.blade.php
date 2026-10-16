@@ -137,6 +137,18 @@
     
     <div class="container">
         <h2>Daftar Aset BMN - BBWS Cimanuk Cisanggarung</h2>
+
+        @if (session('success'))
+    <div style="background-color: #d4edda; color: #155724; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if (session('error'))
+    <div style="background-color: #f8d7da; color: #721c24; padding: 12px; border-radius: 4px; margin-bottom: 15px;">
+        {{ session('error') }}
+    </div>
+@endif
         
         <!-- Form Filter -->
         <form method="GET" action="{{ url('/asets') }}" class="filter-form">
@@ -166,6 +178,7 @@
                     <th>NUP</th>
                     <th>Nama Barang</th>
                     <th>Kondisi</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -187,11 +200,18 @@
                             <span style="color: gray;">Belum Diopname</span>
                         @endif
                     </td>
+                    <td>
+    @if ($aset->kondisi === null)
+        <a href="{{ url('/asets/' . $aset->id . '/opname') }}">Kerjakan Opname</a>
+    @else
+        <span>✅ Selesai</span>
+    @endif
+</td>
                 </tr>
                 @empty
                 <!-- Ditampilkan jika hasil filter kosong -->
                 <tr>
-                    <td colspan="5" style="text-align: center; color: #777;">Data aset tidak ditemukan.</td>
+                    <td colspan="6" style="text-align: center; color: #777;">Data aset tidak ditemukan.</td>
                 </tr>
                 @endforelse
                 <!-- Selesai Perulangan -->

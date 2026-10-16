@@ -20,11 +20,9 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/asets', [AsetController::class, 'index'])->middleware('auth');
 
-Route::get('/admin/impor', function () {
-    return 'Selamat datang di Halaman Impor Excel Khusus Admin!';
-})->middleware(['auth', 'admin']);
-
 Route::get('/admin/impor', [AsetController::class, 'formImpor'])->middleware(['auth', 'admin']);
 Route::post('/admin/impor', [AsetController::class, 'prosesImpor'])->middleware(['auth', 'admin']);
+Route::get('/asets/{id}/opname', [AsetController::class, 'edit'])->middleware('auth');
+Route::post('/asets/{id}/opname', [AsetController::class, 'update'])->middleware('auth');
 
 require __DIR__ . '/auth.php';

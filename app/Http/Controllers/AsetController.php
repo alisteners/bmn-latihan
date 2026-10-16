@@ -13,6 +13,9 @@ class AsetController extends Controller
     {
         $query = Aset::query();
 
+        // Mengunci data (Isolasi) berdasarkan kode_satker petugas yang sedang login
+        $query->where('kode_satker', $request->user()->kode_satker);
+
         // Jika pengguna memilih filter satker
         if ($request->filled('satker')) {
             $query->where('kode_satker', $request->satker);
@@ -50,5 +53,43 @@ class AsetController extends Controller
 
         // Setelah selesai, arahkan kembali ke halaman daftar aset
         return redirect('/asets');
+    }
+
+    public function edit($id)
+    {
+        // Mencari barang spesifik berdasarkan ID, atau memunculkan halaman 404 jika tidak ada
+        $aset = Aset::findOrFail($id);
+
+        return view('asets.opname', [
+            'aset' => $aset
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        // 1. Ambil data barang berdasarkan ID
+        $aset = Aset::findOrFail($id);
+
+        // 2. Cek Keamanan 1 - Isolasi Satker
+        // Mencegah petugas memanipulasi ID di URL untuk mengedit barang satker lain
+        if ($aset->kode_satker !== $request->user()->kode_satker) {
+            abort(403, 'Anda tidak berhak mengopname aset dari Satker lain!');
+        }
+
+        // 3. Cek Keamanan 2 - Anti-Tabrakan (Collision-Proff)
+        // Mencegah penimpaan data jika form keduluan di-submit oleh petugas lain
+        if ($aset->kondisi !== null) {
+            return redirect('/asets')->with('error', 'Gagal! Aset ini baru saja selesai diopname oleh petugas lain');
+        }
+
+        // 4. Simpan Data Hasil Opname ke Database
+        $aset->update([
+            'kondisi'             => $request->kondisi,
+            'status_penggunaan'   => $request->status_penggunaan,
+            'catatan'             => $request->catatan,
+        ]);
+
+        // 5. Kembalikan ke halaman daftar aset dengan pesan sukses
+        return redirect('/asets')->with('success', 'Data opname berhasil disimpan!');
     }
 }
