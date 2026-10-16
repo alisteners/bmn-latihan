@@ -64,14 +64,20 @@ class AsetController extends Controller
         return redirect('/asets');
     }
 
-    public function edit($id)
+    public function edit(Request $request, $id)
     {
         // Mencari barang spesifik berdasarkan ID, atau memunculkan halaman 404 jika tidak ada
         $aset = Aset::findOrFail($id);
 
-        return view('asets.opname', [
-            'aset' => $aset
-        ]);
+        if ($aset->kode_satker !== $request->user()->kode_satker) {
+            abort(403, 'Anda tidak berhak mengopname aset dari Satker lain!');
+        }
+
+        if ($aset->kondisi !== null) {
+            return redirect('/asets')->with('error', 'Aset ini sudah selesai diopname.');
+        }
+
+        return view('asets.opname', ['aset' => $aset]);
     }
 
     public function update(Request $request, $id)
