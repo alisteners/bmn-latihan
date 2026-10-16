@@ -82,6 +82,12 @@ class AsetController extends Controller
 
     public function update(Request $request, $id)
     {
+        $validated = $request->validate([
+            'kondisi'           => 'required|in:Baik,Rusak Ringan,Rusak Berat',
+            'status_penggunaan' => 'required|in:Digunakan Sendiri untuk Operasional,Tidak Digunakan / Idle',
+            'catatan'           => 'nullable|string|max:2000',
+        ]);
+
         // 1. Ambil data barang berdasarkan ID
         $aset = Aset::findOrFail($id);
 
@@ -99,9 +105,9 @@ class AsetController extends Controller
 
         // 4. Simpan Data Hasil Opname ke Database
         $aset->update([
-            'kondisi'             => $request->kondisi,
-            'status_penggunaan'   => $request->status_penggunaan,
-            'catatan'             => $request->catatan,
+            'kondisi'             => $validated['kondisi'],
+            'status_penggunaan'   => $validated['status_penggunaan'],
+            'catatan'             => $validated['catatan'] ?? null,
         ]);
 
         // 5. Kembalikan ke halaman daftar aset dengan pesan sukses
