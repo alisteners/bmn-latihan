@@ -103,12 +103,20 @@ class AsetController extends Controller
             return redirect('/asets')->with('error', 'Gagal! Aset ini baru saja selesai diopname oleh petugas lain');
         }
 
-        // 4. Simpan Data Hasil Opname ke Database
-        $aset->update([
-            'kondisi'             => $validated['kondisi'],
-            'status_penggunaan'   => $validated['status_penggunaan'],
-            'catatan'             => $validated['catatan'] ?? null,
-        ]);
+        // 4. Simpan atomik: syarat whereNull('kondisi') dievaluasi database
+        //    tepat saat UPDATE berjalan, jadi dua submit bersamaan tidak bisa
+        //    dua-duanya lolos — yang kedua dapat 0 baris terpengaruh.
+        $terpengaruh = Aset::where('id', $aset->id)
+            ->whereNull('kondisi')
+            ->update([
+                'kondisi'           => $validated['kondisi'],
+                'status_penggunaan' => $validated['status_penggunaan'],
+                'catatan'           => $validated['catatan'] ?? null,
+            ]);
+
+        if ($terpengaruh === 0) {
+            return redirect('/asets')->with('error', 'Gagal! Aset ini baru saja selesai diopname oleh petugas lain');
+        }
 
         // 5. Kembalikan ke halaman daftar aset dengan pesan sukses
         return redirect('/asets')->with('success', 'Data opname berhasil disimpan!');

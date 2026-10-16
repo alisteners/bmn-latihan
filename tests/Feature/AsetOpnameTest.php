@@ -106,4 +106,29 @@ class AsetOpnameTest extends TestCase
         $response->assertRedirect('/asets');
         $this->assertEquals('Rusak Ringan', $aset->fresh()->kondisi);
     }
+
+    public function test_submit_kedua_ditolak_dan_data_pertama_bertahan(): void
+    {
+        $p1 = User::factory()->create(['kode_satker' => '000111', 'email' => 'p1@test.com']);
+        $p2 = User::factory()->create(['kode_satker' => '000111', 'email' => 'p2@test.com']);
+        $aset = Aset::create([
+            'kode_satker' => '000111',
+            'kode_barang' => '1.2.3.04.05.006',
+            'nup' => 1,
+            'nama_barang' => 'Laptop',
+            'kondisi' => null,
+        ]);
+
+        $this->actingAs($p1)->post('/asets/' . $aset->id . '/opname', [
+            'kondisi' => 'Baik',
+            'status_penggunaan' => 'Digunakan Sendiri untuk Operasional',
+        ])->assertSessionHas('success');
+
+        $this->actingAs($p2)->post('/asets/' . $aset->id . '/opname', [
+            'kondisi' => 'Rusak Berat',
+            'status_penggunaan' => 'Tidak Digunakan / Idle',
+        ])->assertSessionHas('error');
+
+        $this->assertEquals('Baik', $aset->fresh()->kondisi);
+    }
 }
