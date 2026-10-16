@@ -52,27 +52,26 @@ class AsetController extends Controller
     // 2. Memproses file Excel yang diupload Admin
     public function prosesImpor(Request $request)
     {
-    $request->validate([
-        'file_excel' => 'required|mimes:xlsx,xls,csv'
-    ]);
+        $request->validate([
+            'file_excel' => 'required|mimes:xlsx,xls,csv'
+        ]);
 
-    $import = new AsetsImport($request->user()->kode_satker);
-    Excel::import($import, $request->file('file_excel'));
-    $gagal = collect($import->failures())
-    ->map(fn($f) => [
-        'baris'  => $f->row(),
-        'alasan' => $f->errors(),
-    ])
-    ->merge($import->duplikatTerlapor())
-    ->sortBy('baris')->values()->all();
-;
+        $import = new AsetsImport($request->user()->kode_satker);
+        Excel::import($import, $request->file('file_excel'));
+        $gagal = collect($import->failures())
+            ->map(fn($f) => [
+                'baris'  => $f->row(),
+                'alasan' => $f->errors(),
+            ])
+            ->merge($import->duplikatTerlapor())
+            ->sortBy('baris')->values()->all();;
 
-    return redirect('/asets')->with([
-        'success'     => 'Impor selesai: ' . $import->jumlahBerhasil() . ' baris masuk, ' . count($gagal) . ' baris dilewati.',
-        'impor_gagal' => $gagal,
-    ]);
+        return redirect('/asets')->with([
+            'success'     => 'Impor selesai: ' . $import->jumlahBerhasil() . ' baris masuk, ' . count($gagal) . ' baris dilewati.',
+            'impor_gagal' => $gagal,
+        ]);
     }
-    
+
     public function edit(Request $request, $id)
     {
         // Mencari barang spesifik berdasarkan ID, atau memunculkan halaman 404 jika tidak ada
@@ -115,17 +114,16 @@ class AsetController extends Controller
         // 4. Simpan atomik: syarat whereNull('kondisi') dievaluasi database
         //    tepat saat UPDATE berjalan, jadi dua submit bersamaan tidak bisa
         //    dua-duanya lolos — yang kedua dapat 0 baris terpengaruh.
-        $terpengaruh = Aset::where('id', $aset->id)
-            ->whereNull('kondisi')
-            ->update([
-                'kondisi'           => $validated['kondisi'],
-                'status_penggunaan' => $validated['status_penggunaan'],
-                'catatan'           => $validated['catatan'] ?? null,
-            ]);
+        $berhasil = $aset->selesaikanOpname([
+            'kondisi'           => $validated['kondisi'],
+            'status_penggunaan' => $validated['status_penggunaan'],
+            'catatan'           => $validated['catatan'] ?? null,
+        ]);
 
-        if ($terpengaruh === 0) {
+        if (! $berhasil) {
             return redirect('/asets')->with('error', 'Gagal! Aset ini baru saja selesai diopname oleh petugas lain');
         }
+
 
         // 5. Kembalikan ke halaman daftar aset dengan pesan sukses
         return redirect('/asets')->with('success', 'Data opname berhasil disimpan!');
