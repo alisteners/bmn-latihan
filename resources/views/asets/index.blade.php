@@ -130,6 +130,17 @@
         @if (session('error'))
             <div class="alert-error">{{ session('error') }}</div>
         @endif
+        @if (session('impor_gagal') && count(session('impor_gagal')) > 0)
+    <div class="alert-error">
+        <strong>{{ count(session('impor_gagal')) }} baris dilewati saat impor:</strong>
+        <ul style="margin: 8px 0 0 20px; list-style: disc;">
+            @foreach (session('impor_gagal') as $gagal)
+                <li>Baris {{ $gagal['baris'] }}: {{ implode('; ', $gagal['alasan']) }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 
         <!-- Baris Info User, Tombol Khusus Admin, & Tombol Logout -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">

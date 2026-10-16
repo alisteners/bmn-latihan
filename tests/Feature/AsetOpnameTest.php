@@ -6,7 +6,7 @@ use App\Models\Aset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-
+use Illuminate\Http\UploadedFile;
 class AsetOpnameTest extends TestCase
 {
     use RefreshDatabase;
@@ -131,4 +131,61 @@ class AsetOpnameTest extends TestCase
 
         $this->assertEquals('Baik', $aset->fresh()->kondisi);
     }
+
+    public function test_celah4_baris_salah_dilewati_dilaporkan_dengan_nomor_baris(): void
+{
+    $admin = User::factory()->create(['role' => 'admin', 'kode_satker' => '033041']);
+
+    $baris = ['kode_satker,kode_barang,nup,nama_barang'];
+    for ($i = 1; $i <= 50; $i++) {
+        $baris[] = "033041,BRG{$i},{$i},Barang {$i}";
+    }
+    $baris[5]  = '033041,,5,Barang tanpa kode';
+    $baris[10] = '033041,BRG10,ABC,Barang nup salah';
+    $baris[15] = '033042,BRG15,15,Barang satker lain';
+    $baris[20] = ',BRG20,20,Barang tanpa satker';
+    $baris[25] = '033041,BRG1,1,Duplikat baris 2';
+
+    $path = tempnam(sys_get_temp_dir(), 'impor') . '.csv';
+    file_put_contents($path, implode("\n", $baris));
+
+    $this->actingAs($admin)->post('/admin/impor', [
+        'file_excel' => new UploadedFile($path, 'aset.csv', 'text/csv', null, true),
+    ])->assertRedirect('/asets');
+
+    $this->assertEquals(45, Aset::count());
+    $gagal = session('impor_gagal');
+    $this->assertCount(5, $gagal);
+    $this->assertEquals([6, 11, 16, 21, 26],
+        collect($gagal)->pluck('baris')->sort()->values()->all());
+
+    @unlink($path);
+}
+
+public function test_celah4_impor_ulang_tidak_menggandakan_dan_tidak_menimpa_opname(): void
+{
+    $admin = User::factory()->create(['role' => 'admin', 'kode_satker' => '033041']);
+    $csv = "kode_satker,kode_barang,nup,nama_barang\n033041,BRG1,1,Meja\n033041,BRG2,2,Kursi";
+
+    $kirim = function () use ($admin, $csv) {
+        $path = tempnam(sys_get_temp_dir(), 'impor') . '.csv';
+        file_put_contents($path, $csv);
+        $r = $this->actingAs($admin)->post('/admin/impor', [
+            'file_excel' => new UploadedFile($path, 'aset.csv', 'text/csv', null, true),
+        ]);
+        @unlink($path);
+        return $r;
+    };
+
+    $kirim()->assertRedirect('/asets');
+    $this->assertEquals(2, Aset::count());
+
+    $aset = Aset::where('kode_barang', 'BRG1')->first();
+    $aset->update(['kondisi' => 'Baik', 'status_penggunaan' => 'Digunakan Sendiri untuk Operasional']);
+
+    $kirim()->assertRedirect('/asets');
+    $this->assertEquals(2, Aset::count());
+    $this->assertEquals('Baik', $aset->fresh()->kondisi);
+}
+
 }

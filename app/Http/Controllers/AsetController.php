@@ -52,18 +52,27 @@ class AsetController extends Controller
     // 2. Memproses file Excel yang diupload Admin
     public function prosesImpor(Request $request)
     {
-        // Validasi agar yang diupload benar-benar file Excel/CSV
-        $request->validate([
-            'file_excel' => 'required|mimes:xlsx,xls,csv'
-        ]);
+    $request->validate([
+        'file_excel' => 'required|mimes:xlsx,xls,csv'
+    ]);
 
-        // Jalankan proses impor menggunakan AsetsImport buatanmu
-        Excel::import(new AsetsImport, $request->file('file_excel'));
+    $import = new AsetsImport($request->user()->kode_satker);
+    Excel::import($import, $request->file('file_excel'));
+    $gagal = collect($import->failures())
+    ->map(fn($f) => [
+        'baris'  => $f->row(),
+        'alasan' => $f->errors(),
+    ])
+    ->merge($import->duplikatTerlapor())
+    ->sortBy('baris')->values()->all();
+;
 
-        // Setelah selesai, arahkan kembali ke halaman daftar aset
-        return redirect('/asets');
+    return redirect('/asets')->with([
+        'success'     => 'Impor selesai: ' . $import->jumlahBerhasil() . ' baris masuk, ' . count($gagal) . ' baris dilewati.',
+        'impor_gagal' => $gagal,
+    ]);
     }
-
+    
     public function edit(Request $request, $id)
     {
         // Mencari barang spesifik berdasarkan ID, atau memunculkan halaman 404 jika tidak ada
