@@ -31,7 +31,6 @@ class DatabaseSeeder extends Seeder
             'kode_satker' => '033041',
         ]);
 
-
         $this->call([
             AsetSeeder::class,
         ]);

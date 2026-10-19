@@ -23,9 +23,9 @@
                     <label for="kondisi" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Kondisi Barang</label>
                     <select name="kondisi" id="kondisi" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <option value="">-- Pilih Kondisi --</option>
-                        <option value="Baik">Baik</option>
-                        <option value="Rusak Ringan">Rusak Ringan</option>
-                        <option value="Rusak Berat">Rusak Berat</option>
+                        @foreach (\App\Models\Aset::KONDISI as $opsi)
+                            <option value="{{ $opsi }}" {{ old('kondisi') == $opsi ? 'selected' : '' }}>{{ $opsi }}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -34,8 +34,9 @@
                     <label for="status_penggunaan" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Status Penggunaan</label>
                     <select name="status_penggunaan" id="status_penggunaan" required class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                         <option value="">-- Pilih Status --</option>
-                        <option value="Digunakan Sendiri untuk Operasional">Digunakan Sendiri untuk Operasional</option>
-                        <option value="Tidak Digunakan / Idle">Tidak Digunakan / Idle</option>
+                        @foreach (\App\Models\Aset::STATUS_PENGGUNAAN as $opsi)
+                            <option value="{{ $opsi }}" {{ old('status_penggunaan') == $opsi ? 'selected' : '' }}>{{ $opsi }}</option>
+                        @endforeach
                     </select>
                 </div>
 

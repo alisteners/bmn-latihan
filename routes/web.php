@@ -25,4 +25,4 @@ Route::post('/admin/impor', [AsetController::class, 'prosesImpor'])->middleware(
 Route::get('/asets/{id}/opname', [AsetController::class, 'edit'])->middleware('auth');
 Route::post('/asets/{id}/opname', [AsetController::class, 'update'])->middleware('auth');
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

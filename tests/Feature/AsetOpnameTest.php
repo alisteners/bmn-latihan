@@ -5,8 +5,8 @@ namespace Tests\Feature;
 use App\Models\Aset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use Illuminate\Http\UploadedFile;
+use Tests\TestCase;
 
 class AsetOpnameTest extends TestCase
 {
@@ -24,7 +24,7 @@ class AsetOpnameTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)
-            ->get('/asets/' . $asetOrangLain->id . '/opname');
+            ->get('/asets/'.$asetOrangLain->id.'/opname');
 
         $response->assertStatus(403);
     }
@@ -41,7 +41,7 @@ class AsetOpnameTest extends TestCase
         ]);
 
         $response = $this->actingAs($user)
-            ->get('/asets/' . $asetSelesai->id . '/opname');
+            ->get('/asets/'.$asetSelesai->id.'/opname');
 
         $response->assertRedirect('/asets');
         $response->assertSessionHas('error');
@@ -58,7 +58,7 @@ class AsetOpnameTest extends TestCase
             'kondisi' => null,
         ]);
 
-        $response = $this->actingAs($user)->post('/asets/' . $aset->id . '/opname', [
+        $response = $this->actingAs($user)->post('/asets/'.$aset->id.'/opname', [
             'kondisi' => 'Hancur',
             'status_penggunaan' => 'Digunakan Sendiri untuk Operasional',
         ]);
@@ -78,7 +78,7 @@ class AsetOpnameTest extends TestCase
             'kondisi' => null,
         ]);
 
-        $response = $this->actingAs($user)->post('/asets/' . $aset->id . '/opname', [
+        $response = $this->actingAs($user)->post('/asets/'.$aset->id.'/opname', [
             'kondisi' => 'Baik',
             'status_penggunaan' => 'Dipinjam Tetangga',
         ]);
@@ -98,7 +98,7 @@ class AsetOpnameTest extends TestCase
             'kondisi' => null,
         ]);
 
-        $response = $this->actingAs($user)->post('/asets/' . $aset->id . '/opname', [
+        $response = $this->actingAs($user)->post('/asets/'.$aset->id.'/opname', [
             'kondisi' => 'Rusak Ringan',
             'status_penggunaan' => 'Tidak Digunakan / Idle',
             'catatan' => 'Kaki goyang',
@@ -120,12 +120,12 @@ class AsetOpnameTest extends TestCase
             'kondisi' => null,
         ]);
 
-        $this->actingAs($p1)->post('/asets/' . $aset->id . '/opname', [
+        $this->actingAs($p1)->post('/asets/'.$aset->id.'/opname', [
             'kondisi' => 'Baik',
             'status_penggunaan' => 'Digunakan Sendiri untuk Operasional',
         ])->assertSessionHas('success');
 
-        $this->actingAs($p2)->post('/asets/' . $aset->id . '/opname', [
+        $this->actingAs($p2)->post('/asets/'.$aset->id.'/opname', [
             'kondisi' => 'Rusak Berat',
             'status_penggunaan' => 'Tidak Digunakan / Idle',
         ])->assertSessionHas('error');
@@ -141,13 +141,13 @@ class AsetOpnameTest extends TestCase
         for ($i = 1; $i <= 50; $i++) {
             $baris[] = "033041,BRG{$i},{$i},Barang {$i}";
         }
-        $baris[5]  = '033041,,5,Barang tanpa kode';
+        $baris[5] = '033041,,5,Barang tanpa kode';
         $baris[10] = '033041,BRG10,ABC,Barang nup salah';
         $baris[15] = '033042,BRG15,15,Barang satker lain';
         $baris[20] = ',BRG20,20,Barang tanpa satker';
         $baris[25] = '033041,BRG1,1,Duplikat baris 2';
 
-        $path = tempnam(sys_get_temp_dir(), 'impor') . '.csv';
+        $path = tempnam(sys_get_temp_dir(), 'impor').'.csv';
         file_put_contents($path, implode("\n", $baris));
 
         $this->actingAs($admin)->post('/admin/impor', [
@@ -172,12 +172,13 @@ class AsetOpnameTest extends TestCase
         $csv = "kode_satker,kode_barang,nup,nama_barang\n033041,BRG1,1,Meja\n033041,BRG2,2,Kursi";
 
         $kirim = function () use ($admin, $csv) {
-            $path = tempnam(sys_get_temp_dir(), 'impor') . '.csv';
+            $path = tempnam(sys_get_temp_dir(), 'impor').'.csv';
             file_put_contents($path, $csv);
             $r = $this->actingAs($admin)->post('/admin/impor', [
                 'file_excel' => new UploadedFile($path, 'aset.csv', 'text/csv', null, true),
             ]);
             @unlink($path);
+
             return $r;
         };
 
@@ -198,9 +199,9 @@ class AsetOpnameTest extends TestCase
         $aset = Aset::create([
             'kode_satker' => '000111',
             'kode_barang' => '1.2.3.04.05.006',
-            'nup'         => 1,
+            'nup' => 1,
             'nama_barang' => 'Laptop',
-            'kondisi'     => null,
+            'kondisi' => null,
         ]);
 
         // Ambil baris yang sama dua kali sebagai dua objek terpisah di memori
@@ -209,15 +210,15 @@ class AsetOpnameTest extends TestCase
         $objekPetugas2 = Aset::find($aset->id);
 
         $this->assertTrue($objekPetugas1->selesaikanOpname([
-            'kondisi'           => 'Baik',
+            'kondisi' => 'Baik',
             'status_penggunaan' => 'Digunakan Sendiri untuk Operasional',
-            'catatan'           => null,
+            'catatan' => null,
         ]));
 
         $this->assertFalse($objekPetugas2->selesaikanOpname([
-            'kondisi'           => 'Rusak Berat',
+            'kondisi' => 'Rusak Berat',
             'status_penggunaan' => 'Tidak Digunakan / Idle',
-            'catatan'           => null,
+            'catatan' => null,
         ]));
 
         $this->assertEquals('Baik', $aset->fresh()->kondisi);
@@ -273,5 +274,26 @@ class AsetOpnameTest extends TestCase
 
         // Assert rekapitulasi totalAset hanya menghitung 1 (milik satker sendiri)
         $response->assertViewHas('totalAset', 1);
+    }
+
+    public function test_update_aset_satker_lain_dengan_data_tidak_valid_tetap_403(): void
+    {
+        $petugas = User::factory()->create(['role' => 'petugas', 'kode_satker' => '033041']);
+
+        $aset = Aset::create([
+            'kode_satker' => '033042',
+            'kode_barang' => 'BRG-99',
+            'nup' => 99,
+            'nama_barang' => 'Aset Satker Lain',
+            'kondisi' => null,
+        ]);
+
+        // Data tidak valid + satker lain -> harus 403 (otorisasi dulu), bukan 302 validasi
+        $this->actingAs($petugas)->post("/asets/{$aset->id}/opname", [
+            'kondisi' => 'Hancur',
+            'status_penggunaan' => 'Ngawur',
+        ])->assertStatus(403);
+
+        $this->assertNull($aset->fresh()->kondisi);
     }
 }

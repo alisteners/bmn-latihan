@@ -187,9 +187,9 @@
                 <option value="">-- Semua Kondisi --</option>
                 <!-- Pilihan Baru: Belum Diopname -->
                 <option value="belum" {{ request('kondisi') == 'belum' ? 'selected' : '' }}>⏳ Belum Diopname (Antrean)</option>
-                <option value="Baik" {{ request('kondisi') == 'Baik' ? 'selected' : '' }}>Baik</option>
-                <option value="Rusak Ringan" {{ request('kondisi') == 'Rusak Ringan' ? 'selected' : '' }}>Rusak Ringan</option>
-                <option value="Rusak Berat" {{ request('kondisi') == 'Rusak Berat' ? 'selected' : '' }}>Rusak Berat</option>
+                @foreach (\App\Models\Aset::KONDISI as $opsi)
+                <option value="{{ $opsi }}" {{ request('kondisi') == $opsi ? 'selected' : '' }}>{{ $opsi }}</option>
+                @endforeach
             </select>
 
             <button type="submit">Filter</button>
