@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('role')->default('petugas');
-            $table->string('kode_satker')->default('033041');
+            $table->string('kode_satker');
             $table->rememberToken();
             $table->timestamps();
         });
