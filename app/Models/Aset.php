@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
 class Aset extends Model
 {
@@ -14,8 +15,10 @@ class Aset extends Model
 
     public function selesaikanOpname(array $data): bool
     {
+        $dataAman = Arr::only($data, ['kondisi', 'status_penggunaan', 'catatan']);
+
         return static::where('id', $this->id)
             ->whereNull('kondisi')
-            ->update($data) === 1;
+            ->update($dataAman) === 1;
     }
 }

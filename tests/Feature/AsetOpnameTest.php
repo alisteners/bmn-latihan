@@ -163,6 +163,20 @@ class AsetOpnameTest extends TestCase
             collect($gagal)->pluck('baris')->sort()->values()->all()
         );
 
+        // Impor ke-2: file yang sama diimpor ulang
+        $this->actingAs($admin)->post('/admin/impor', [
+            'file_excel' => new UploadedFile($path, 'aset.csv', 'text/csv', null, true),
+        ])->assertRedirect('/asets')
+            ->assertSessionHas('success', 'Impor selesai: 0 baris masuk, 45 sudah ada, 5 gagal.');
+
+        $this->assertEquals(45, Aset::count());
+        $gagalKedua = session('impor_gagal');
+        $this->assertCount(5, $gagalKedua);
+        $this->assertEquals(
+            [6, 11, 16, 21, 26],
+            collect($gagalKedua)->pluck('baris')->sort()->values()->all()
+        );
+
         @unlink($path);
     }
 
@@ -213,6 +227,7 @@ class AsetOpnameTest extends TestCase
             'kondisi' => 'Baik',
             'status_penggunaan' => 'Digunakan Sendiri untuk Operasional',
             'catatan' => null,
+            'kode_satker' => '999999',
         ]));
 
         $this->assertFalse($objekPetugas2->selesaikanOpname([
@@ -222,6 +237,7 @@ class AsetOpnameTest extends TestCase
         ]));
 
         $this->assertEquals('Baik', $aset->fresh()->kondisi);
+        $this->assertEquals('000111', $aset->fresh()->kode_satker);
     }
 
     public function test_petugas_tidak_bisa_akses_impor_admin(): void
