@@ -16,12 +16,13 @@ class AsetsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
     use SkipsFailures;
 
     private int $jumlahBerhasil = 0;
+    private int $jumlahSudahAda = 0;
 
     /** @var array<string, list<int>> kunci baris => daftar batch-index (urutan kemunculan) */
     private array $indexPerKunci = [];
 
     /** @var array<string, true> kunci yang sudah berhasil diimpor pada proses ini */
-    private array $kunciBerhasil = [];
+    private array $kunciTerlihat = [];
 
     /** @var list<array{baris:int, alasan:list<string>}> duplikat dalam file yang dilaporkan */
     private array $duplikatTerlapor = [];
@@ -76,14 +77,17 @@ class AsetsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
         $nup        = $row['nup'] ?? null;
         $kunci      = $kodeSatker . '|' . $kodeBarang . '|' . $nup;
 
-        // Ambil batch-index baris ini (konsumsi urutan kemunculan per kunci).
         $daftarIndex = $this->indexPerKunci[$kunci] ?? [];
         $index = array_shift($daftarIndex);
         $this->indexPerKunci[$kunci] = $daftarIndex;
         $barisExcel = $index ?? 0; // $index sudah berupa nomor baris Excel
 
-        // Duplikat dalam file yang sama -> laporkan dengan nomor baris.
-        if (isset($this->kunciBerhasil[$kunci])) {
+        // Tandai terlihat SEBELUM cek database -> duplikat konsisten
+        // antara impor pertama dan impor ulang.
+        $duplikatDalamFile = isset($this->kunciTerlihat[$kunci]);
+        $this->kunciTerlihat[$kunci] = true;
+
+        if ($duplikatDalamFile) {
             $this->duplikatTerlapor[] = [
                 'baris'  => $barisExcel,
                 'alasan' => ['Duplikat: kombinasi kode_satker + kode_barang + nup sudah muncul pada baris sebelumnya di file ini.'],
@@ -91,20 +95,17 @@ class AsetsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
             return null;
         }
 
-        // Sudah ada di database -> lewati diam-diam: impor ulang tidak
-        // menggandakan dan tidak menimpa data hasil opname. Unique index
-        // di migrasi menjadi jaring pengaman terakhir.
         $sudahAda = Aset::where('kode_satker', $kodeSatker)
             ->where('kode_barang', $kodeBarang)
             ->where('nup', $nup)
             ->exists();
 
         if ($sudahAda) {
+            $this->jumlahSudahAda++;
             return null;
         }
 
         $this->jumlahBerhasil++;
-        $this->kunciBerhasil[$kunci] = true;
 
         return new Aset([
             'kode_satker' => $kodeSatker,
@@ -124,6 +125,11 @@ class AsetsImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFai
     public function jumlahBerhasil(): int
     {
         return $this->jumlahBerhasil;
+    }
+
+    public function jumlahSudahAda(): int
+    {
+        return $this->jumlahSudahAda;
     }
 
     /** @return list<array{baris:int, alasan:list<string>}> */

@@ -67,7 +67,7 @@ class AsetController extends Controller
             ->sortBy('baris')->values()->all();;
 
         return redirect('/asets')->with([
-            'success'     => 'Impor selesai: ' . $import->jumlahBerhasil() . ' baris masuk, ' . count($gagal) . ' baris dilewati.',
+            'success' => "Impor selesai: {$import->jumlahBerhasil()} baris masuk, {$import->jumlahSudahAda()} sudah ada, " . count($gagal) . " gagal.",
             'impor_gagal' => $gagal,
         ]);
     }

@@ -152,7 +152,8 @@ class AsetOpnameTest extends TestCase
 
         $this->actingAs($admin)->post('/admin/impor', [
             'file_excel' => new UploadedFile($path, 'aset.csv', 'text/csv', null, true),
-        ])->assertRedirect('/asets');
+        ])->assertRedirect('/asets')
+            ->assertSessionHas('success', 'Impor selesai: 45 baris masuk, 0 sudah ada, 5 gagal.');
 
         $this->assertEquals(45, Aset::count());
         $gagal = session('impor_gagal');
@@ -180,13 +181,14 @@ class AsetOpnameTest extends TestCase
             return $r;
         };
 
-        $kirim()->assertRedirect('/asets');
+        $kirim()->assertRedirect('/asets')->assertSessionHas('success', 'Impor selesai: 2 baris masuk, 0 sudah ada, 0 gagal.');
         $this->assertEquals(2, Aset::count());
 
         $aset = Aset::where('kode_barang', 'BRG1')->first();
+
         $aset->update(['kondisi' => 'Baik', 'status_penggunaan' => 'Digunakan Sendiri untuk Operasional']);
 
-        $kirim()->assertRedirect('/asets');
+        $kirim()->assertRedirect('/asets')->assertSessionHas('success', 'Impor selesai: 0 baris masuk, 2 sudah ada, 0 gagal.');
         $this->assertEquals(2, Aset::count());
         $this->assertEquals('Baik', $aset->fresh()->kondisi);
     }
