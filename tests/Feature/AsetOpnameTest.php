@@ -222,4 +222,56 @@ class AsetOpnameTest extends TestCase
 
         $this->assertEquals('Baik', $aset->fresh()->kondisi);
     }
+
+    public function test_petugas_tidak_bisa_akses_impor_admin(): void
+    {
+        $petugas = User::factory()->create(['role' => 'petugas', 'kode_satker' => '033041']);
+
+        // Petugas buka GET /admin/impor harus ditolak (403)
+        $this->actingAs($petugas)->get('/admin/impor')->assertStatus(403);
+
+        // Petugas POST /admin/impor harus ditolak (403)
+        $this->actingAs($petugas)->post('/admin/impor')->assertStatus(403);
+    }
+
+    public function test_admin_bisa_akses_impor(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'kode_satker' => '033041']);
+
+        // Admin buka GET /admin/impor harus berhasil (200)
+        $this->actingAs($admin)->get('/admin/impor')->assertStatus(200);
+    }
+
+    public function test_halaman_asets_hanya_menampilkan_aset_satker_sendiri(): void
+    {
+        $petugas = User::factory()->create(['role' => 'petugas', 'kode_satker' => '033041']);
+
+        // Buat aset untuk satkernya sendiri
+        $asetSendiri = Aset::create([
+            'kode_satker' => '033041',
+            'kode_barang' => 'BRG-01',
+            'nup' => 1,
+            'nama_barang' => 'Laptop Satker Sendiri',
+            'kondisi' => null,
+        ]);
+
+        // Buat aset untuk satker lain
+        $asetLain = Aset::create([
+            'kode_satker' => '033042',
+            'kode_barang' => 'BRG-02',
+            'nup' => 1,
+            'nama_barang' => 'Komputer Satker Lain',
+            'kondisi' => null,
+        ]);
+
+        $response = $this->actingAs($petugas)->get('/asets');
+
+        $response->assertStatus(200);
+        // Assert melihat nama barang sendiri dan tidak melihat nama barang satker lain
+        $response->assertSee('Laptop Satker Sendiri');
+        $response->assertDontSee('Komputer Satker Lain');
+
+        // Assert rekapitulasi totalAset hanya menghitung 1 (milik satker sendiri)
+        $response->assertViewHas('totalAset', 1);
+    }
 }
